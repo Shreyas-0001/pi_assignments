@@ -1,0 +1,491 @@
+﻿<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery/dist/jquery.js"></script>
+<script src="~/js/details.js"></script>
+
+
+
+
+
+@model IEnumerable<empform_ajax.Models.As1Employee>
+
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+
+@*CREATE EMPLOYEE BUTTON AJAX*@
+
+<script>
+
+
+    $(document).ready(function () {
+        $('.validate-input').on('input', function () {
+            var input = $(this);
+            var value = input.val();
+            var name = input.attr('name');
+            var valid = true;
+            if (name === 'Salary') {
+                if (value < 5000) {
+                    input.siblings('.text-danger').text(name + ' should not be less than 5000')
+                    valid = false;
+                }
+                else {
+                    input.siblings('.text-danger').text('');
+                }
+            } else if (name.startsWith('Skills-')) {
+                var skillName = name.substring(7);
+                var checkboxes = $('input[name^="Skills-"][name$="' + skillName + '"]');
+                var checked = checkboxes.filter(':checked').length;
+
+                if (checked === 0) {
+                    input.next('.text-danger').text('Please select at least one skill');
+                    valid = false;
+                } else {
+                    input.next('.text-danger').text('');
+                }
+
+            } else if (name === 'Dateofbirth') {
+                var dt = new Date(value);
+                var currentTime = new Date();
+                var currentyear = currentTime.getFullYear();
+                var year = dt.getFullYear();
+                if (currentyear - year < 18) {
+                    input.siblings('.text-danger').text('Age should be greater than 18');
+                    valid = false;
+                }
+                else { input.siblings('.text-danger').text(''); }
+            } else {
+                if (!value) {
+                    input.next('.text-danger').text(name + ' is required bro');
+                    valid = false;
+                }
+            }
+            if (valid) {
+                input.next('.text-danger').text('');
+            }
+        });
+    });
+
+
+    function SearchButton() {
+        var query1 = $("#query").val();
+        var obj = {
+            query: query1
+        }
+
+        $.ajax({
+            type: 'get',
+            url: "/Work/Search",
+            data: obj,
+
+            success: function (data) {
+
+                $("body").html(data);
+
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+    }
+
+
+
+
+
+
+    // NOT USED IT BUT IMP FUNCTION TO LEARN FROM READ IT
+
+
+    //function detailButton(ID) {
+
+    //    var obj = {
+    //        id: ID
+    //    }
+
+    //    $.ajax({
+    //        type: 'get',
+    //        url: "/Work/Details",
+    //        data: obj,
+
+    //        success: function (data) {
+
+    //            console.log("success2");
+
+    //            // Convert the HTML string to a jQuery object
+    //            var $html = $(data);
+    //            $("#dModal .modal-body").html($html);
+
+
+    //            $("#dModal").modal("show");
+
+    //            // Add an event listener to the modal to remove the backdrop when it is closed
+    //            $("#dModal").on("hidden.bs.modal", function () {
+    //                $(".modal-backdrop").remove();
+    //            });
+
+    //            // Add an event listener for the X button to remove the backdrop when it is clicked
+    //            $("#dModal").find(".close").on("click", function () {
+    //                $(".modal-backdrop").remove();
+    //            });
+
+    //        },
+    //        error: function (xhr, status, error) {
+    //            console.error(xhr.responseText);
+    //        }
+    //    });
+    //}
+
+
+    
+    function save() {
+        var modelList = [];
+        var skilList = [];
+
+        $("form[id^='edit-ation-']").each(function () {
+
+            var query1 = $(this).serializeArray();
+
+            var skill = "";
+            var i = 12
+            while (query1[i].name == 'Skills-' + query1[0].value) {
+                skill = skill + "," + query1[i].value;
+                i++;
+                if (query1[i] == null) {
+                    break;
+                }
+            }
+            var skl = skill.substring(1);
+            var skil_ids = {
+                id: query1[0].value,
+                ids: skl
+            }
+            skilList.push(skil_ids);
+            {
+                var model = {
+                    Id: query1[0].value,
+                    Firstname: query1[1].value,
+                    Lastname: query1[2].value,
+                    Dateofbirth: query1[3].value,
+                    Gender: query1[5].value,
+                    Salary: query1[6].value,
+                    Doj: query1[8].value,
+                    Departmentid: query1[10].value,
+                    Designationid: query1[11].value,
+                    Skills: skill
+                };
+                modelList.push(model);
+            }
+
+        });
+
+        var obj = {
+            as1Employee: modelList,
+            psk: skilList
+        }
+        $.ajax({
+            type: 'post',
+            url: "/Work/EditAll",
+            data: obj,
+
+            success: function (data) {
+                
+                var viewbagitem = $(data).find('#myHiddenField').val();
+                console.log(data)
+                if (viewbagitem === "True") {
+                    //var content = $(data).find('#content-container').html();
+                    //$("#content-container").html(content);
+                    //$(document).ready();
+                    //$("body").show();
+                    $.get('/Work/Index', function(r){
+                    $("body").html(r);});
+
+                    alert('Employee Data Updated Successfully!');
+                }
+                else {
+
+                    $("body").html(data.view);
+
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+
+    }
+
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+<div id="index_table">
+    <h1>Index</h1>
+    <input type="hidden" id="myHiddenField" value= @ViewBag.Flag />
+    <p>
+        <a asp-action="Create">Create New</a>
+    </p>
+
+    <form onsubmit="return false;">
+        <input type="text" id="query" placeholder="Enter firstname here" onkeydown="if (event.keyCode === 13) SearchButton();">
+        <button type="button" class="btn btn-success" style="background-color: blue; color: white;" onclick="SearchButton(); return false">
+            Search
+        </button>
+    </form>
+
+    <form style="text-align: right;">
+        <button type="button" class="btn btn-success" style="background-color: blue; color: white;" onclick="save(); return false">
+            SAVE
+        </button>
+    </form>
+
+
+
+    @*IMP PART READ ALL FUNCTIONS AND SUCCESS RESPONSE*@
+
+
+    <script>
+
+        function ascorder() {
+            $.ajax({
+                type: 'get',
+                url: "/Work/AscResult",
+
+                success: function (data) {
+
+                    var content = $(data).find('#content-container').html();
+                    $("#content-container").html(content);
+                    $("body").show();
+
+
+
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+        }
+
+        function descorder() {
+            $.ajax({
+                type: 'get',
+                url: "/Work/DescResult",
+
+                success: function (data) {
+
+                    var content = $(data).find('#content-container').html();
+                    $("#content-container").html(content);
+                    $("body").show();
+
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                }
+            });
+        }
+
+        var clickCount = 0;
+        function call() {
+            clickCount++;
+
+            if (clickCount == 1) {
+                ascorder();
+            } else if (clickCount == 2) {
+                descorder();
+                clickCount = 0;
+            }
+
+        }
+
+
+        //ONE ANOTHER WAY BY ADDING EVENT LISTENER INSTEAD OF
+        //document.getElementById("myButton").addEventListener("click", function () {
+
+        //    clickCount++;
+
+        //    if (clickCount == 1) {
+        //        ascorder();
+        //    } else if (clickCount == 2) {
+        //        descorder();
+        //        clickCount = 0;
+        //    }
+        //});
+    </script>
+
+
+
+
+
+
+
+    <div id="content-container">
+
+        <table class="table">
+            <thead>
+                <tr>
+
+                    <th>
+                        <button type="button" class="btn btn-link" onclick="call(); return false">
+                            @Html.DisplayNameFor(model => model.Firstname)
+                        </button>
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Lastname)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Dateofbirth)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Gender)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Salary)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Doj)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Department)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Designation)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Skills)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody style="font-size: 12px;">
+                @foreach (var item in Model)
+                {
+                    
+                    <form id="edit-ation-@item.Id">
+                    <tr>
+                            @*<div asp-validation-summary="ModelOnly" class="text-danger"></div>*@
+                        <input type="hidden" asp-for="@item.Id" name="Id" />
+                        
+                        <td>
+                            <div class="form-group">
+
+                                <input asp-for="@item.Firstname" name="Firstname" style="font-size: 15px; width: 100px; height: 30px;" class="form-control validate-input" required />
+                                <span asp-validation-for="@item.Firstname" class="text-danger"></span>
+
+                            </div>
+
+                        </td>
+                        <td>
+
+                            <input asp-for="@item.Lastname" name="Lastname" style="font-size: 15px; width: 100px; height: 30px;" class="form-control validate-input" required />
+                            <span asp-validation-for="@item.Lastname" class="text-danger"></span>
+                        </td>
+                        <td>
+
+                            <input asp-for="@item.Dateofbirth.Value" name="Dateofbirth" style="font-size: 15px; width: 125px; height: 30px;" class="form-control validate-input" required />
+                            <span asp-validation-for="@item.Dateofbirth" class="text-danger"></span>
+                        </td>
+                        <td>
+
+                            <input asp-for="@item.Gender" name="Gender" style="font-size: 15px; width: 60px; height: 30px;" class="form-control validate-input" required />
+                            <span asp-validation-for="@item.Gender" class="text-danger"></span>
+                        </td>
+                        <td>
+
+                            <input asp-for="@item.Salary" name="Salary" style="font-size: 15px; width: 90px; height: 30px;" class="form-control validate-input" required />
+                            <span asp-validation-for="@item.Salary" class="text-danger"></span>
+                        </td>
+                        <td>
+
+                            <input asp-for="@item.Doj.Value" name="Doj" style="font-size: 15px; width: 125px; height: 30px;" class="form-control validate-input" required />
+                            <span asp-validation-for="@item.Doj" class="text-danger"></span>
+                        </td>
+                        <td>
+
+                            <select asp-for="@item.Departmentid" name="Departmentid" style="font-size: 15px; width: 90px; height: 30px;" class="form-control validate-input" required>
+                                    @foreach (var department in ViewBag.department)
+                                    {
+                                    <option value="@department.Value">@department.Text</option>
+                                    }
+                            </select>
+                        </td>
+                        <td>
+
+                            <select asp-for="@item.Designationid" name="Designationid" style="font-size: 15px; width: 100px; height: 30px;" class="form-control validate-input" required>
+                                    @foreach (var designation in ViewBag.designation)
+                                    {
+                                    <option value="@designation.Value">@designation.Text</option>
+                                    }
+                            </select>
+                        </td>
+                        <td>
+                            <style>
+                                .skill-columns {
+                                    column-count: 2;
+                                }
+                            </style>
+                            <form name="Skills-@item.Id">
+                                <div class="skill-columns ">
+                                        @foreach (var skill in ViewBag.skill_list)
+                                        {
+                                            bool isChecked = item.Skills.Any(s => s.Id == Convert.ToInt32(skill.Value));
+                                        <div class="form-check form-check-inline validate-input" name="Skills-@item.Id">
+                                                @if (isChecked)
+                                                {
+                                                <input checked="checked" class="form-check-input" type="checkbox" name="Skills-@item.Id" value="@skill.Value">
+                                                <span class="text-danger"></span>
+                                                <label class="form-check-label">@skill.Text</label>
+                                                }
+                                                else
+                                                {
+                                                <input class="form-check-input" type="checkbox" name="Skills-@item.Id" value="@skill.Value">
+                                                <span class="text-danger"></span>
+                                                <label class="form-check-label">@skill.Text</label>
+                                                }
+                                        </div>
+                                        <span class="text-danger"></span>
+                                        }
+                                </div>
+
+                            </form>
+
+
+
+
+
+                        </td>
+
+                    </tr>
+
+                    </form>
+                }
+            </tbody>
+        </table>
+
+    </div>
+
+
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+
+

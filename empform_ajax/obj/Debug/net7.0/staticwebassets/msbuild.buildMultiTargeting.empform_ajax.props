@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\empform_ajax.props" />
+</Project>
